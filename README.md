@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TheGanaGallery
+
+A handicraft e-commerce store built with Next.js (App Router) and Supabase.
+
+---
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router, TypeScript, Turbopack)
+- **Styling:** Tailwind CSS
+- **Database & Auth:** Supabase (PostgreSQL + Row-Level Security)
+- **Validation:** Zod
+- **State:** Zustand (cart)
+- **Payments:** Razorpay
+- **Image hosting:** Cloudinary
+- **Deployment:** Vercel
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone and install
+
+```bash
+git clone <repo-url>
+cd gle_store
+npm install
+```
+
+### 2. Environment variables
+
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+Get these from your Supabase project → Settings → API. **Never commit this file.**
+
+### 3. Database setup
+
+Run the SQL migration scripts (see `/supabase` folder or ask Lakshya for the latest schema) in the Supabase SQL Editor. This sets up:
+- `products` table
+- `profiles` table (user roles: `customer` / `admin`)
+- Row-Level Security policies on both
+
+### 4. Run the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+app/
+  api/              → Backend route handlers (REST API)
+  (auth)/           → Login, signup pages
+  (shop)/           → Customer-facing pages (home, products, cart, checkout)
+  (admin)/          → Admin dashboard pages
+lib/
+  supabase-browser.ts   → Supabase client for Client Components
+  supabase-server.ts    → Supabase client for Server Components / API routes
+  session.ts            → Server-side auth/role helpers (admin checks)
+  auth.ts                → Client-side auth hooks (useUser, signIn, signOut)
+  cartStore.ts           → Zustand cart store
+  api-response.ts        → Standard API response helpers
+  validations/           → Zod schemas for request validation
+types/
+  index.ts          → Shared TypeScript types (Product, Order, CartItem, etc.)
+middleware.ts       → Session refresh + protected route handling
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Overview
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+All API routes return a consistent shape:
 
-## Deploy on Vercel
+```ts
+{ data?: T, error?: string, message?: string }
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Route | Methods | Auth |
+|---|---|---|
+| `/api/products` | GET (list), POST (create) | GET public, POST admin |
+| `/api/products/[id]` | GET, PUT, DELETE | GET public, PUT/DELETE admin |
+| `/api/orders` | POST | Logged-in user |
+| `/api/payment/create-order` | POST | Logged-in user |
+| `/api/payment/verify` | POST | Logged-in user |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Full contract with request/response examples is in [`AGENTS.md`](./AGENTS.md).
+
+---
+
+## Development Workflow
+
+- `main` → production, deployed to Vercel. **Never push directly.**
+- `dev` → shared integration branch. All work happens via PRs into `dev`.
+- Branch naming: `feat/short-description`
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b feat/your-feature
+# ... work ...
+git push origin feat/your-feature
+# open PR into dev
+```
+
+---
+
+## Team
+
+- **Lakshya** — Backend (API, database, auth, payments)
+- **Daksh** — Frontend (UI, pages, components)
+
+For current progress, what's ready to use, and what's still in progress, see [`AGENTS.md`](./AGENTS.md) — this is updated after every completed phase.
+
+---
+
+## Scripts
+
+```bash
+npm run dev      # Start dev server
+npm run build    # Production build
+npm run start    # Start production server
+npm run lint     # Run ESLint
+```
