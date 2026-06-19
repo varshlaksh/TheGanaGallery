@@ -62,3 +62,24 @@ export interface ApiResponse<T> {
   error?:   string
   message?: string
 }
+
+
+// ── Category ──────────────────────────────────────────
+export interface Category {
+  id:            string
+  name:          string
+  slug:          string
+  description:   string
+  image_url:     string
+  display_order: number
+  is_active:     boolean
+  created_at:    string
+}
+
+// ── Admin ─────────────────────────────────────────────
+export type OrderStatusUpdate =
+  | 'processing'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled'
+  // admin can only move forward — can't set back to pending/paid

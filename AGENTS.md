@@ -1,220 +1,27 @@
-# AGENTS.md — TheGanaGallery Project Handoff
-> Last updated: Phase 4 complete — full backend done  
-> Lakshya → Backend | Daksh → Frontend
+# AGENTS.md — TheGanaGallery
+> For: Daksh (Frontend) | Written by: Lakshya (Backend)  
+> Status: **Backend 100% done.** You can now build every page.
 
 ---
 
-## What This File Is
+## TL;DR — What's Ready For You Right Now
 
-This file keeps both of us in sync. Read this before every work session.  
-Check the **API Contract** table — it's the source of truth for what's ready to wire up vs. still mock data.
+The entire backend is built and tested. Every API you need to build the full frontend is live and working. Here's what you can start on immediately without waiting for anything:
 
----
-
-## Project Stack
-
-| Layer | Tech |
+| What | Status |
 |---|---|
-| Framework | Next.js 16 (App Router, TypeScript) |
-| Styling | Tailwind CSS |
-| Database + Auth | Supabase (PostgreSQL, Row-Level Security) |
-| Validation | Zod |
-| Cart State | Zustand |
-| Payments | Razorpay (test mode — live keys go in at deploy) |
-| Image Storage | Cloudinary (Phase 5) |
-| Deploy | Vercel (Phase 6) |
+| User signup / login / logout | ✅ Ready |
+| Product listing page | ✅ Ready |
+| Product detail page | ✅ Ready |
+| Categories for navbar / homepage | ✅ Ready |
+| Cart (no API needed) | ✅ Ready |
+| Checkout + Payment | ✅ Ready |
+| Order history page | ✅ Ready |
+| Admin dashboard | ✅ Ready (routes done, you build the UI) |
 
 ---
 
-## Repo Rules
-
-- `main` → production only, never push directly
-- `dev` → shared branch, both of us PR into this
-- Branch naming: `feat/your-feature-name`
-- Always pull from `dev` before starting new work
-
-```bash
-git checkout dev
-git pull origin dev
-git checkout -b feat/your-feature-name
-```
-
----
-
-## Current Status
-
-### ✅ Phase 1 — Foundation (DONE)
-
-| File | What it does | Daksh needs? |
-|---|---|---|
-| `lib/supabase-browser.ts` | Supabase client for browser | Import when needed |
-| `lib/supabase-server.ts` | Supabase client for server | Don't import in client files |
-| `middleware.ts` | Session refresh + `/admin` protection | Don't touch |
-| `types/index.ts` | All shared types | ✅ Import everywhere |
-| `lib/auth.ts` | useUser, signIn, signUp, signOut | ✅ Use these |
-| `lib/cartStore.ts` | Zustand cart store | ✅ Use these |
-
-### ✅ Phase 2 — Products API (DONE)
-
-| File | What it does | Daksh needs? |
-|---|---|---|
-| `lib/session.ts` | getSession, getUserRole, requireAdmin | No — backend only |
-| `lib/api-response.ts` | ok() / fail() response helpers | No — backend only |
-| `lib/validations/product.ts` | Zod product schemas | No — backend only |
-| `app/api/products/route.ts` | GET list + POST create (admin) | ✅ GET ready |
-| `app/api/products/[id]/route.ts` | GET + PUT + DELETE | ✅ GET ready |
-
-### ✅ Phase 3 — Orders API (DONE)
-
-| File | What it does | Daksh needs? |
-|---|---|---|
-| `lib/validations/order.ts` | Zod order schemas | No — backend only |
-| `app/api/orders/route.ts` | POST create order + GET list | ✅ Both ready |
-| `app/api/orders/[id]/route.ts` | GET single order | ✅ Ready |
-
-### ✅ Phase 4 — Payment (DONE)
-
-| File | What it does | Daksh needs? |
-|---|---|---|
-| `lib/razorpay.ts` | Razorpay client instance | No — backend only |
-| `lib/supabase-admin.ts` | Service role client (bypasses RLS) | No — backend only |
-| `lib/validations/payment.ts` | Zod payment schemas | No — backend only |
-| `app/api/payment/create-order/route.ts` | Creates Razorpay order from internal orderId | ✅ Ready |
-| `app/api/payment/verify/route.ts` | HMAC signature verify → marks order paid | ✅ Ready |
-
-### 🔄 Phase 5 — Admin Panel + Categories + Images (NEXT)
-
-See Phase 5 plan below.
-
-### ⏳ Phase 6 — Deploy (Vercel + live Razorpay keys)
-
----
-
-## Daksh: How To Use Auth
-
-```tsx
-import { useUser, signIn, signUp, signOut } from '@/lib/auth'
-
-const { user, loading } = useUser()
-// user = null if not logged in, user.email / user.id when logged in
-
-await signIn(email, password)
-await signUp(email, password)
-await signOut()
-```
-
----
-
-## Daksh: How To Use Cart
-
-```tsx
-import { useCartStore } from '@/lib/cartStore'
-
-const { items, addItem, removeItem, updateQuantity, clearCart, total, itemCount } = useCartStore()
-
-addItem(product)        // adds 1
-addItem(product, 3)     // adds 3
-removeItem(product.id)
-<p>₹{(total() / 100).toFixed(2)}</p>
-<span>{itemCount()}</span>
-```
-
----
-
-## Daksh: Shared Types
-
-```tsx
-import type { Product, CartItem, Order, ShippingAddress, ApiResponse } from '@/types'
-```
-
-All API responses follow this shape:
-```ts
-{ data?: T, error?: string, message?: string }
-```
-
----
-
-## Daksh: API Contract — Full Reference
-
-| Route | Method | Status | Returns |
-|---|---|---|---|
-| `/api/products` | GET | ✅ READY | `{ data: { products: Product[], total, page, limit } }` |
-| `/api/products?category=X&search=X&page=1&limit=20` | GET | ✅ READY | filtered + paginated |
-| `/api/products/[id]` | GET | ✅ READY | `{ data: Product }` |
-| `/api/products` | POST | ✅ READY (admin only) | `{ data: Product }` 201 |
-| `/api/products/[id]` | PUT | ✅ READY (admin only) | `{ data: Product }` |
-| `/api/products/[id]` | DELETE | ✅ READY (admin only) | soft delete |
-| `/api/orders` | POST | ✅ READY | `{ data: { orderId, status } }` 201 |
-| `/api/orders` | GET | ✅ READY | `{ data: Order[] }` with nested items |
-| `/api/orders/[id]` | GET | ✅ READY | `{ data: Order }` with nested items |
-| `/api/payment/create-order` | POST | ✅ READY | `{ data: { razorpayOrderId, amount, currency } }` |
-| `/api/payment/verify` | POST | ✅ READY | `{ data: { success: true } }` |
-| `/api/admin/products` | GET/POST | 🔄 Phase 5 | admin product management |
-| `/api/admin/orders` | GET/PUT | 🔄 Phase 5 | admin order management |
-| `/api/categories` | GET | 🔄 Phase 5 | `{ data: Category[] }` |
-
----
-
-## Daksh: Checkout Flow (how the payment routes connect)
-
-This is the sequence Daksh needs to implement in the checkout page:
-
-```
-1. User fills shipping form + clicks "Place Order"
-2. POST /api/orders → { orderId }
-3. POST /api/payment/create-order { orderId } → { razorpayOrderId, amount }
-4. Open Razorpay checkout widget with razorpayOrderId + NEXT_PUBLIC_RAZORPAY_KEY_ID
-5. User pays → Razorpay returns { razorpay_order_id, razorpay_payment_id, razorpay_signature }
-6. POST /api/payment/verify { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature }
-7. On { success: true } → redirect to /orders/[orderId] (order confirmation page)
-```
-
-Razorpay widget snippet for checkout page:
-```tsx
-const options = {
-  key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-  amount: amount,           // from create-order response
-  currency: 'INR',
-  order_id: razorpayOrderId, // from create-order response
-  handler: async (response) => {
-    // response has razorpay_order_id, razorpay_payment_id, razorpay_signature
-    await fetch('/api/payment/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId, ...response })
-    })
-    router.push(`/orders/${orderId}`)
-  }
-}
-const rzp = new window.Razorpay(options)
-rzp.open()
-```
-
-Add this to `app/layout.tsx` so the Razorpay script is available:
-```tsx
-<Script src="https://checkout.razorpay.com/v1/checkout.js" />
-```
-
----
-
-## Daksh: Pages Status
-
-| Page | Path | API Status | Priority |
-|---|---|---|---|
-| Homepage | `app/(shop)/page.tsx` | No API needed | 🔴 Build now |
-| Product listing | `app/(shop)/products/page.tsx` | ✅ Ready | 🔴 Build now |
-| Product detail | `app/(shop)/products/[id]/page.tsx` | ✅ Ready | 🔴 Build now |
-| Login | `app/(auth)/login/page.tsx` | ✅ Ready | 🔴 Build now |
-| Signup | `app/(auth)/signup/page.tsx` | ✅ Ready | 🔴 Build now |
-| Cart | `app/(shop)/cart/page.tsx` | No API (cartStore) | 🔴 Build now |
-| Checkout | `app/(shop)/checkout/page.tsx` | ✅ All APIs ready | 🟡 Build next |
-| Order confirmation | `app/(shop)/orders/[id]/page.tsx` | ✅ Ready | 🟡 Build next |
-| Order history | `app/(shop)/orders/page.tsx` | ✅ Ready | 🟡 Build next |
-| Admin dashboard | `app/(admin)/admin/page.tsx` | 🔄 Phase 5 | 🟠 After Phase 5 |
-
----
-
-## Environment Setup (first time pulling repo)
+## Project Setup (first time)
 
 ```bash
 git clone <repo-url>
@@ -222,7 +29,7 @@ cd gle_store
 npm install
 ```
 
-Create `.env.local` — ask Lakshya for values:
+Create `.env.local` in the root folder — ask Lakshya for these values:
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -231,13 +38,388 @@ NEXT_PUBLIC_RAZORPAY_KEY_ID=
 
 ```bash
 npm run dev
+# Open http://localhost:3000
 ```
 
 ---
 
-## Questions / Blockers
+## Folder Structure — What's Yours
 
-Drop a message on WhatsApp. Don't wait — if blocked, say immediately.
+```
+app/
+  (auth)/
+    login/page.tsx        ← YOU BUILD
+    signup/page.tsx       ← YOU BUILD
+  (shop)/
+    page.tsx              ← YOU BUILD (homepage)
+    products/
+      page.tsx            ← YOU BUILD (product listing)
+      [id]/page.tsx       ← YOU BUILD (product detail)
+    cart/page.tsx         ← YOU BUILD
+    checkout/page.tsx     ← YOU BUILD
+    orders/
+      page.tsx            ← YOU BUILD (order history)
+      [id]/page.tsx       ← YOU BUILD (order confirmation)
+  (admin)/
+    admin/page.tsx        ← YOU BUILD (dashboard)
+    admin/products/page.tsx  ← YOU BUILD
+    admin/orders/page.tsx    ← YOU BUILD
+  api/                    ← LAKSHYA's — don't touch
+  layout.tsx              ← SHARED — add Razorpay script here (see below)
 
-### Questions
-_(add here)_
+components/               ← YOU BUILD (Button, ProductCard, Navbar etc.)
+lib/                      ← LAKSHYA's — import from here, don't edit
+types/index.ts            ← SHARED — import types from here
+```
+
+---
+
+## Auth — How To Use
+
+Import from `lib/auth.ts`. Never call Supabase directly.
+
+```tsx
+'use client'
+import { useUser, signIn, signUp, signOut } from '@/lib/auth'
+
+// Inside any component:
+const { user, loading } = useUser()
+
+if (loading) return <p>Loading...</p>
+if (!user) return <p>Not logged in</p>
+// user.email, user.id are available when logged in
+
+// Sign in:
+await signIn(email, password)   // throws on wrong credentials
+
+// Sign up:
+await signUp(email, password)   // sends confirmation email
+
+// Sign out:
+await signOut()
+```
+
+**Protect pages** — if a page needs login, check `useUser()` and redirect:
+```tsx
+'use client'
+import { useUser } from '@/lib/auth'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
+const { user, loading } = useUser()
+const router = useRouter()
+
+useEffect(() => {
+  if (!loading && !user) router.push('/login')
+}, [user, loading])
+```
+
+**Admin pages** are auto-protected by middleware — non-admins get redirected to homepage automatically. You don't need to add any checks in the admin UI.
+
+---
+
+## Cart — How To Use
+
+Import from `lib/cartStore.ts`. This is a Zustand store — works in any Client Component.
+
+```tsx
+'use client'
+import { useCartStore } from '@/lib/cartStore'
+
+const {
+  items,          // CartItem[] — list of items in cart
+  addItem,        // (product, quantity?) => void
+  removeItem,     // (productId) => void
+  updateQuantity, // (productId, quantity) => void
+  clearCart,      // () => void
+  total,          // () => number — total in paise
+  itemCount,      // () => number — total quantity count
+} = useCartStore()
+
+// Add to cart button:
+<button onClick={() => addItem(product)}>Add to Cart</button>
+<button onClick={() => addItem(product, 3)}>Add 3</button>
+
+// Remove from cart:
+<button onClick={() => removeItem(product.id)}>Remove</button>
+
+// Show price (divide paise by 100 for rupees):
+<p>₹{(total() / 100).toFixed(2)}</p>
+
+// Cart icon badge:
+<span>{itemCount()}</span>
+```
+
+> Note: prices in the database are stored in **paise** (₹1 = 100 paise). Always divide by 100 before showing to the user.
+
+---
+
+## TypeScript Types
+
+All types are in `types/index.ts`. Import like this:
+
+```tsx
+import type { Product, Category, CartItem, Order, ShippingAddress, ApiResponse } from '@/types'
+```
+
+**Key types:**
+
+```ts
+Product {
+  id, name, description,
+  price: number        // paise — divide by 100 to show ₹
+  images: string[]     // Cloudinary URLs
+  category: string     // matches a Category slug e.g. "wall-hangings"
+  stock: number
+  is_active: boolean
+  created_at: string
+}
+
+Category {
+  id, name,
+  slug: string         // url-safe e.g. "wall-hangings" — use in filters
+  description: string
+  image_url: string    // Cloudinary URL — use for category card images
+  display_order: number // use this to sort categories in navbar
+  is_active: boolean
+}
+
+Order {
+  id, user_id, status, total,
+  items: OrderItem[]
+  shipping_address: ShippingAddress
+}
+
+OrderStatus = 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+
+ApiResponse<T> = { data?: T, error?: string, message?: string }
+// Every API route returns this shape
+```
+
+---
+
+## API Routes — Full Reference
+
+Every response has this shape: `{ data: ... }` on success, `{ error: "message" }` on failure.
+
+### Products
+
+```ts
+// List products (public)
+GET /api/products
+GET /api/products?category=baskets          // filter by category slug
+GET /api/products?search=handwoven          // search name + description
+GET /api/products?page=2&limit=20           // paginate (default limit 20, max 50)
+// Returns: { data: { products: Product[], total: number, page: number, limit: number } }
+
+// Single product (public)
+GET /api/products/[id]
+// Returns: { data: Product }
+```
+
+### Categories
+
+```ts
+// List all active categories ordered by display_order (public)
+GET /api/categories
+// Returns: { data: Category[] }
+// Use this for: navbar menu, homepage category sections, filter dropdown
+```
+
+### Orders
+
+```ts
+// Create order from cart (must be logged in)
+POST /api/orders
+body: {
+  items: [{ product_id: string, quantity: number }],
+  shipping_address: {
+    full_name: string,
+    phone: string,        // Indian mobile number
+    line1: string,
+    line2?: string,
+    city: string,
+    state: string,
+    pincode: string       // 6 digits
+  }
+}
+// Returns: { data: { orderId: string, status: "pending" } }
+
+// List logged-in user's orders
+GET /api/orders
+// Returns: { data: Order[] } with nested items and product details
+
+// Single order detail
+GET /api/orders/[id]
+// Returns: { data: Order } with nested items and product details
+```
+
+### Payment (Razorpay)
+
+```ts
+// Step 1 — create Razorpay order
+POST /api/payment/create-order
+body: { orderId: string }   // the orderId from /api/orders
+// Returns: { data: { razorpayOrderId: string, amount: number, currency: "INR" } }
+
+// Step 2 — verify payment after Razorpay widget completes
+POST /api/payment/verify
+body: {
+  orderId: string,
+  razorpay_order_id: string,
+  razorpay_payment_id: string,
+  razorpay_signature: string
+}
+// Returns: { data: { success: true } }
+```
+
+### Admin (you build the UI, these are the routes)
+
+```ts
+GET  /api/admin/products          // all products including inactive ones
+POST /api/admin/products          // create product
+PUT  /api/admin/products/[id]     // update product
+DELETE /api/admin/products/[id]   // delete (hard if no orders, soft if has orders)
+
+GET  /api/admin/orders            // all orders from all users
+GET  /api/admin/orders/[id]       // single order full detail
+PATCH /api/admin/orders/[id]      // update order status
+body: { status: "processing" | "shipped" | "delivered" | "cancelled" }
+
+POST /api/admin/upload            // upload image to Cloudinary
+body: FormData with "file" (image) and "folder" ("products" or "categories")
+// Returns: { data: { url: string, publicId: string } }
+```
+
+---
+
+## Checkout Flow — Step By Step
+
+This is the complete sequence for the checkout page:
+
+```
+1. User fills in shipping address form
+2. User clicks "Place Order"
+3. POST /api/orders → get orderId
+4. POST /api/payment/create-order { orderId } → get razorpayOrderId + amount
+5. Open Razorpay widget (see code below)
+6. User completes payment
+7. Razorpay calls your handler with razorpay_order_id, razorpay_payment_id, razorpay_signature
+8. POST /api/payment/verify { orderId, ...razorpayFields }
+9. On success → redirect to /orders/[orderId]
+```
+
+**Razorpay widget code for checkout page:**
+
+First add this to `app/layout.tsx`:
+```tsx
+import Script from 'next/script'
+// inside <body>:
+<Script src="https://checkout.razorpay.com/v1/checkout.js" />
+```
+
+Then in your checkout component:
+```tsx
+const handlePayment = async (orderId: string, razorpayOrderId: string, amount: number) => {
+  const options = {
+    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+    amount: amount,              // already in paise
+    currency: 'INR',
+    order_id: razorpayOrderId,
+    name: 'TheGanaGallery',
+    description: 'Handicraft Order',
+    handler: async (response: {
+      razorpay_order_id: string
+      razorpay_payment_id: string
+      razorpay_signature: string
+    }) => {
+      const res = await fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, ...response })
+      })
+      const json = await res.json()
+      if (json.data?.success) {
+        router.push(`/orders/${orderId}`)
+      }
+    },
+    prefill: {
+      name: shippingAddress.full_name,
+      contact: shippingAddress.phone,
+    },
+    theme: { color: '#000000' }  // change to match your brand color
+  }
+  const rzp = new (window as any).Razorpay(options)
+  rzp.open()
+}
+```
+
+---
+
+## Pages Build Order (suggested)
+
+Build in this order so you always have something working to show:
+
+**Week 1 — Core pages**
+1. `app/layout.tsx` — add Navbar, footer, Razorpay script
+2. `app/(auth)/login/page.tsx` — email + password form, calls `signIn()`
+3. `app/(auth)/signup/page.tsx` — email + password form, calls `signUp()`
+4. `app/(shop)/page.tsx` — homepage, fetch `/api/categories` for sections
+5. `app/(shop)/products/page.tsx` — product grid, fetch `/api/products`, filter by category
+6. `app/(shop)/products/[id]/page.tsx` — product detail, add to cart button
+
+**Week 2 — Transaction pages**
+7. `app/(shop)/cart/page.tsx` — use `useCartStore()`, no API needed
+8. `app/(shop)/checkout/page.tsx` — shipping form + Razorpay payment
+9. `app/(shop)/orders/[id]/page.tsx` — order confirmation / detail
+10. `app/(shop)/orders/page.tsx` — order history list
+
+**Week 3 — Admin**
+11. `app/(admin)/admin/page.tsx` — dashboard overview
+12. `app/(admin)/admin/products/page.tsx` — product management table
+13. `app/(admin)/admin/orders/page.tsx` — orders management table
+
+---
+
+## Error Handling Pattern
+
+Every API call should handle errors the same way:
+
+```tsx
+const res = await fetch('/api/products')
+const json = await res.json()
+
+if (json.error) {
+  // show error to user
+  setError(json.error)
+  return
+}
+
+// use json.data safely
+const products = json.data.products
+```
+
+---
+
+## Git Workflow
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b feat/your-page-name
+
+# do your work...
+
+git add .
+git commit -m "feat: add product listing page"
+git push origin feat/your-page-name
+# open PR into dev on GitHub
+```
+
+Never push directly to `main`.
+
+---
+
+## Questions?
+
+WhatsApp Lakshya. Don't guess — if an API returns something unexpected, share the response and I'll check.
